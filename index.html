@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiring Diagram Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="motor.css">
+</head>
+<body>
+<div id="toolbar">
+    <div class="search-wrapper">
+        <input id="component_search" type="search" placeholder="Search components..." autocomplete="off">
+        <div id="search_results"></div>
+    </div>
+
+    <div class="custom-dropdown">
+        <button id="tool_dropdown_button" class="dropdown-button" type="button">
+            <span id="tool_dropdown_label">Tool: Select</span><span class="dropdown-arrow">▼</span>
+        </button>
+        <div id="tool_dropdown_menu" class="dropdown-menu">
+            <button type="button" data-tool="select">Select</button>
+            <button type="button" data-tool="wire">Wire</button>
+            <button type="button" data-tool="delete">Delete</button>
+            <button type="button" data-tool="rotate">Rotate Selected</button>
+            <button type="button" data-tool="fault">Toggle Fault</button>
+        </div>
+    </div>
+
+    <div class="custom-dropdown">
+        <button id="file_dropdown_button" class="dropdown-button" type="button">
+            <span>File Actions</span><span class="dropdown-arrow">▼</span>
+        </button>
+        <div id="file_dropdown_menu" class="dropdown-menu">
+            <button type="button" data-file-action="save">Save Project</button>
+            <button type="button" data-file-action="load">Load Project</button>
+            <button type="button" data-file-action="download">Download Image</button>
+            <button type="button" data-file-action="print">Print Diagram</button>
+        </div>
+    </div>
+
+    <label class="toolbar-control">Wire <input id="wire_color" type="color" value="#222222"></label>
+    <button id="cancel_wire_button" type="button" disabled>Cancel Wire</button>
+    <button id="zoom_out_button" type="button">−</button>
+    <span id="zoom_display">100%</span>
+    <button id="zoom_in_button" type="button">+</button>
+    <button id="center_view_button" type="button">Center Grid</button>
+    <button id="run_button" type="button">Run</button>
+    <button id="stop_button" type="button" disabled>Stop</button>
+    <button id="clear_button" type="button">Clear</button>
+    <input id="load_file_input" type="file" accept=".json,application/json" hidden>
+</div>
+
+<div id="status_message">Search for a component to begin.</div>
+
+<div id="workspace">
+    <div id="canvas_viewport">
+        <div id="canvas_transform">
+            <div id="wiring_canvas">
+                <svg id="wire_layer" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8000 6000">
+                    <g id="finished_wires"></g>
+                    <polyline id="wire_preview" points=""></polyline>
+                </svg>
+                <div id="component_layer"></div>
+                <div id="component_preview"><img id="component_preview_image" alt="Component preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <aside id="property_panel">
+        <h2>Properties</h2>
+        <p id="no_selection_message">Select a component.</p>
+        <div id="property_fields" hidden>
+            <label>Name <input id="property_name" type="text"></label>
+
+            <div id="battery_properties" hidden>
+                <label>Voltage <input id="battery_voltage" type="number" min="0" step="0.1"></label>
+                <label>Maximum current <input id="battery_amperage" type="number" min="0" step="0.1"></label>
+            </div>
+
+            <div id="resistor_properties" hidden>
+                <label>Resistance in ohms <input id="resistor_ohms" type="number" min="0" step="1"></label>
+                <label>Maximum watts <input id="resistor_max_watts" type="number" min="0" step="0.1"></label>
+            </div>
+
+            <div id="diode_properties" hidden>
+                <label>Forward voltage <input id="diode_forward_voltage" type="number" min="0" step="0.1"></label>
+                <label>Maximum current <input id="diode_max_current" type="number" min="0" step="0.01"></label>
+            </div>
+
+            <div id="led_properties" hidden>
+                <label>LED color <input id="led_color" type="color" value="#ff0000"></label>
+                <label>Rated forward voltage <input id="led_forward_voltage" type="number" min="0" step="0.1"></label>
+                <label>Maximum current <input id="led_max_current" type="number" min="0" step="0.001"></label>
+            </div>
+
+            <div id="fuse_properties" hidden>
+                <label>Fuse amperage rating <input id="fuse_max_current" type="number" min="0.001" step="0.1" value="5"></label>
+            </div>
+
+            <button id="save_properties_button" type="button">Save Properties</button>
+        </div>
+    </aside>
+</div>
+
+<section id="fault_panel">
+    <h2>Faults</h2>
+    <div id="fault_summary">Circuit has not been tested.</div>
+    <ul id="fault_list"></ul>
+</section>
+
+<div id="live_tooltip" hidden></div>
+<script src="script.js"></script>
+</body>
+</html>
