@@ -77,33 +77,80 @@ const componentSVG = {
     `,
 
     led: `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60">
-            <line x1="0" y1="32" x2="30" y2="32"
-                  stroke="black" stroke-width="4"/>
+        <svg class="led-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60">
+            <g fill="none" stroke="black" stroke-linecap="round" stroke-linejoin="round">
+                <line class="led-lead" x1="0" y1="27" x2="30" y2="27" stroke-width="4"/>
+                <polygon class="led-diode-body" points="30,9 30,45 68,27" fill="white" stroke-width="4"/>
+                <line class="led-cathode" x1="74" y1="10" x2="74" y2="46" stroke-width="4"/>
+                <line class="led-lead" x1="74" y1="27" x2="110" y2="27" stroke-width="4"/></g>
+                <!-- Light beams -->
+        <line class="led-beam beam-one"
+              x1="58"
+              y1="14"
+              x2="82"
+              y2="-2"
+              stroke-width="2.5"/>
 
-            <polygon
-                points="30,14 30,50 68,32"
-                fill="white"
-                stroke="black"
-                stroke-width="4"
-            />
+        <line class="led-beam beam-two"
+              x1="68"
+              y1="22"
+              x2="93"
+              y2="7"
+              stroke-width="2.5"/>
 
-            <line x1="74" y1="14" x2="74" y2="50"
-                  stroke="black" stroke-width="4"/>
+        <!-- Beam tips -->
+        <line class="led-beam"
+              x1="82"
+              y1="-2"
+              x2="78"
+              y2="0"
+              stroke-width="2.5"/>
 
-            <line x1="74" y1="32" x2="120" y2="32"
-                  stroke="black" stroke-width="4"/>
+        <line class="led-beam"
+              x1="82"
+              y1="-2"
+              x2="80"
+              y2="4"
+              stroke-width="2.5"/>
 
-            <line x1="58" y1="18" x2="81" y2="4"
-                  stroke="black" stroke-width="3"/>
+        <line class="led-beam"
+              x1="93"
+              y1="7"
+              x2="89"
+              y2="9"
+              stroke-width="2.5"/>
 
-            <polygon points="81,4 73,5 78,15"/>
+        <line class="led-beam"
+              x1="93"
+              y1="7"
+              x2="91"
+              y2="13"
+              stroke-width="2.5"/>
+<path class="led-link"
+      d="M32 27 H67"
+      stroke-width="3"/>
 
-            <line x1="70" y1="25" x2="94" y2="11"
-                  stroke="black" stroke-width="3"/>
+<path class="led-break-left"
+      d="M32 27 H46 L51 22"
+      stroke-width="3"/>
 
-            <polygon points="94,11 86,12 91,18"/>
+<path class="led-break-right"
+      d="M57 32 L63 27 H68"
+      stroke-width="3"/>
+
+<circle class="led-spark led-spark-one"
+        cx="53"
+        cy="22"
+        r="2.2"
+        fill="#ffb000"/>
+
+<circle class="led-spark led-spark-two"
+        cx="58"
+        cy="33"
+        r="1.8"
+        fill="#ff3b00"/>
         </svg>
+
     `,
 
     switch: `
@@ -330,6 +377,7 @@ const componentLibrary = [
         type: "led",
         name: "LED",
         image: svgDataURL(componentSVG.led),
+        svg: componentSVG.led,
         conductive: true,
         directional: true,
         defaults: {
@@ -406,9 +454,13 @@ const toolDropdownMenu = $("tool_dropdown_menu");
 
 const fileDropdownButton = $("file_dropdown_button");
 const fileDropdownMenu = $("file_dropdown_menu");
+const viewDropdownButton = $("view_dropdown_button");
+const viewDropdownMenu = $("view_dropdown_menu");
+const simulationDropdownButton = $("simulation_dropdown_button");
+const simulationDropdownMenu = $("simulation_dropdown_menu");
 
 const wireColorInput = $("wire_color");
-const cancelWireButton = $("cancel_wire_button");
+const cancelWireButton = { disabled: true };
 
 const zoomOutButton = $("zoom_out_button");
 const zoomInButton = $("zoom_in_button");
@@ -603,6 +655,8 @@ function nodeKey(componentId, side) {
 function closeMenus() {
     toolDropdownMenu.classList.remove("open");
     fileDropdownMenu.classList.remove("open");
+    viewDropdownMenu.classList.remove("open");
+    simulationDropdownMenu.classList.remove("open");
 }
 
 /* =========================================================
@@ -839,6 +893,11 @@ function setMode(newMode) {
 
     if (newMode === "fault") {
         toggleFault();
+        return;
+    }
+
+    if (newMode === "cancel") {
+        cancelCurrentAction();
         return;
     }
 
@@ -2151,6 +2210,29 @@ function cancelWire() {
     cancelWireButton.disabled = true;
 }
 
+function cancelCurrentAction() {
+    const hadWire = Boolean(wireStart);
+    const hadComponent = Boolean(armedComponent);
+
+    cancelWire();
+    armedComponent = null;
+    armedRotation = 0;
+    componentPreview.style.display = "none";
+
+    if (!running) {
+        mode = "select";
+        toolDropdownLabel.textContent = "Tool: Select";
+    }
+
+    setStatus(
+        hadWire
+            ? "Wire placement cancelled."
+            : hadComponent
+                ? "Component placement cancelled."
+                : "Current action cancelled."
+    );
+}
+
 /* =========================================================
    DELETE
 ========================================================= */
@@ -3113,6 +3195,9 @@ component.element.classList.remove(
 );
         component.element.classList.remove(
             "led-powered",
+            "led-heating",
+            "led-blown",
+            "led-burnt",
             "motor-running",
             "fuse-powered",
             "fuse-heating",
@@ -3157,6 +3242,14 @@ if (component.type === "led") {
 
         component.element.style.removeProperty(
             "--led-glow-strength"
+        );
+
+        component.element.style.removeProperty(
+            "--led-heat-level"
+        );
+
+        component.element.style.removeProperty(
+            "--led-heat-duration"
         );
     }
 
@@ -4156,93 +4249,64 @@ if (component.type === "fuse") {
 }
 
 if (component.type === "led") {
-    const ratedForwardVoltage =
-        Math.max(
-            0.000001,
-            Number(
-                component.properties.forwardVoltage
-            ) || 2
-        );
+    const ratedForwardVoltage = Math.max(
+        0.000001,
+        Number(component.properties.forwardVoltage) || 2
+    );
 
-    const maximumCurrent =
-        Math.max(
-            0.000001,
-            Number(
-                component.properties.maxCurrent
-            ) || 0.02
-        );
+    const maximumCurrent = Math.max(
+        0.000001,
+        Number(component.properties.maxCurrent) || 0.02
+    );
 
-    const currentRatio =
-        component.live.current /
-        maximumCurrent;
-
+    const measuredCurrent = Math.max(0, component.live.current);
     const voltageRatio =
-        component.live.appliedVoltage /
-        ratedForwardVoltage;
+        component.live.appliedVoltage / ratedForwardVoltage;
 
     /*
-     * An LED burns out when:
-     *
-     * 1. Current exceeds its maximum rating.
-     * 2. It receives severe overvoltage without meaningful
-     *    current-limiting resistance.
+     * LED damage follows the LED's configured current rating.
+     * Heating begins at 50% of the rating. The LED opens only
+     * when current is genuinely above the rating, not equal to it.
      */
-    const overCurrent =
-        component.live.current >
-        maximumCurrent * 1.001;
+    const heatCurrent = maximumCurrent * 0.5;
+    const blowCurrent = maximumCurrent;
+    const currentTolerance = Math.max(0.000001, maximumCurrent * 0.001);
 
-    const unprotectedOverVoltage =
-        totalResistance <= 0.000001 &&
-        component.live.appliedVoltage >
-        ratedForwardVoltage * 1.5;
+    const heatLevel = clamp(
+        (measuredCurrent - heatCurrent) /
+            Math.max(0.000001, blowCurrent - heatCurrent),
+        0,
+        1
+    );
 
-    if (
+    const ledOn =
         isPowered &&
-        (overCurrent || unprotectedOverVoltage)
-    ) {
-/*
- * The failure lasts only for the current simulation.
- * Stopping and restarting restores the component.
- */
-component.live.failed = true;
-component.live.powered = false;
-component.live.current = 0;
-component.live.watts = 0;
+        measuredCurrent > 0 &&
+        component.live.voltageDrop >= ratedForwardVoltage * 0.6 &&
+        !component.live.failed;
 
+    /* Current alone controls LED damage. */
+    const ledBlown =
+        ledOn && measuredCurrent > blowCurrent + currentTolerance;
+
+    if (ledBlown) {
+        component.live.failed = true;
+        component.live.powered = false;
+        component.live.current = 0;
+        component.live.watts = 0;
         component.live.status =
-            overCurrent
-                ? (
-                    `Destroyed by overcurrent — ` +
-                    `${circuitCurrent.toFixed(3)} A applied, ` +
-                    `${maximumCurrent.toFixed(3)} A maximum`
-                )
-                : (
-                    `Destroyed by overvoltage — ` +
-                    `${component.live.appliedVoltage.toFixed(3)} V applied, ` +
-                    `${ratedForwardVoltage.toFixed(3)} V rated`
-                );
-
-        component.element.classList.add(
-            "destroyed"
-        );
+            `LED blown open — ${measuredCurrent.toFixed(3)} A applied, ` +
+            `${blowCurrent.toFixed(3)} A maximum`;
 
         component.element.classList.remove(
-            "led-powered"
+            "led-powered",
+            "led-heating",
+            "led-off",
+            "led-burnt"
         );
-
-        component.element.classList.add(
-            "led-off"
-        );
-
-        component.element.style.setProperty(
-            "--led-glow-strength",
-            "0"
-        );
-
-        component.element.style.setProperty(
-            "--led-brightness",
-            "0.25"
-        );
+        component.element.classList.add("destroyed", "led-blown");
+        component.element.style.setProperty("--led-glow-strength", "0");
+        component.element.style.setProperty("--led-brightness", "0.2");
 
         simulationFaults.push({
             name: component.displayName,
@@ -4252,116 +4316,50 @@ component.live.watts = 0;
         componentFailureDetected = true;
         currentPathOpened = true;
         remainingVoltage = 0;
-
         continue;
     }
 
-    /*
-     * Brightness considers both available forward voltage
-     * and LED current.
-     */
-    const currentBrightness =
-        clamp(
-            currentRatio,
-            0,
-            1
-        );
+    const currentBrightness = clamp(measuredCurrent / maximumCurrent, 0, 1);
+    const voltageBrightness = clamp(voltageRatio, 0, 1);
+    const brightness = clamp(currentBrightness * voltageBrightness, 0, 1);
+    const ledHeating = ledOn && measuredCurrent >= heatCurrent;
 
-    const voltageBrightness =
-        clamp(
-            voltageRatio,
-            0,
-            1
-        );
-
-    const brightness =
-        clamp(
-            currentBrightness *
-            voltageBrightness,
-            0,
-            1
-        );
-
-    const ledOn =
-        isPowered &&
-        component.live.current > 0 &&
-        component.live.voltageDrop >=
-            ratedForwardVoltage * 0.6 &&
-!component.live.failed;
-
-    component.element.classList.toggle(
-        "led-powered",
-        ledOn
-    );
-
-    component.element.classList.toggle(
-        "led-off",
-        !ledOn
-    );
+    component.element.classList.toggle("led-powered", ledOn);
+    component.element.classList.toggle("led-heating", ledHeating);
+    component.element.classList.toggle("led-off", !ledOn);
+    component.element.classList.remove("led-blown", "led-burnt", "destroyed");
 
     component.element.style.setProperty(
         "--led-glow",
-        component.properties.color ||
-        "#ff0000"
+        component.properties.color || "#ff0000"
     );
-
+    component.element.style.setProperty("--led-heat-level", String(heatLevel));
+    component.element.style.setProperty(
+        "--led-heat-duration",
+        `${Math.max(0.22, 0.9 - heatLevel * 0.62)}s`
+    );
     component.element.style.setProperty(
         "--led-glow-strength",
-        ledOn
-            ? String(
-                0.15 +
-                brightness * 1.35
-            )
-            : "0"
+        ledOn ? String(0.2 + brightness * 0.9 + heatLevel * 0.9) : "0"
     );
-
-    /*
-     * The image opacity now visibly changes as resistance,
-     * voltage, or current changes.
-     */
     component.element.style.setProperty(
         "--led-brightness",
-        ledOn
-            ? String(
-                0.2 +
-                brightness * 0.8
-            )
-            : "0.25"
+        ledOn ? String(0.3 + brightness * 0.7) : "0.25"
     );
 
-    const image =
-        component.element.querySelector(
-            ".component-body img"
-        );
-
-    if (image) {
-        image.style.opacity = ledOn
-            ? String(
-                0.2 +
-                brightness * 0.8
-            )
-            : "0.35";
-
-        if (ledOn) {
-            image.style.removeProperty(
-                "filter"
-            );
-        } else {
-            image.style.filter = "none";
-        }
-    }
-
-    if (ledOn) {
+    if (ledHeating) {
+        component.live.status =
+            `LED heating — ${measuredCurrent.toFixed(3)} A; ` +
+            `breaks at ${blowCurrent.toFixed(3)} A`;
+    } else if (ledOn) {
         component.live.status =
             brightness < 0.25
                 ? "Powered — very dim"
                 : brightness < 0.6
                     ? "Powered — dim"
-                    : brightness < 0.9
-                        ? "Powered — normal brightness"
-                        : "Powered — maximum brightness";
-    	}
-	}
+                    : "Powered — normal";
+    }
+}
 }
 /*
  * Spin each motor rotor directly with the browser animation
@@ -4659,6 +4657,21 @@ if (allFaults.length === 0) {
             .join("");
 }
     if (shortCircuit) {
+    for (const component of components) {
+        if (component.type !== "led") continue;
+
+        component.live.failed = true;
+        component.live.powered = false;
+        component.live.current = 0;
+        component.live.watts = 0;
+        component.live.status = "Burnt out by short circuit";
+
+        component.element.classList.remove("led-powered");
+        component.element.classList.add("led-off", "destroyed", "led-burnt");
+        component.element.style.setProperty("--led-glow-strength", "0");
+        component.element.style.setProperty("--led-brightness", "0.2");
+    }
+
     setStatus(
         "Simulation fault: short circuit detected."
     );
@@ -5726,6 +5739,20 @@ fileDropdownButton.addEventListener(
     }
 );
 
+viewDropdownButton.addEventListener("click", event => {
+    event.stopPropagation();
+    const shouldOpen = !viewDropdownMenu.classList.contains("open");
+    closeMenus();
+    if (shouldOpen) viewDropdownMenu.classList.add("open");
+});
+
+simulationDropdownButton.addEventListener("click", event => {
+    event.stopPropagation();
+    const shouldOpen = !simulationDropdownMenu.classList.contains("open");
+    closeMenus();
+    if (shouldOpen) simulationDropdownMenu.classList.add("open");
+});
+
 toolDropdownMenu.addEventListener(
     "click",
     event => {
@@ -5798,17 +5825,6 @@ document.addEventListener(
             searchResults.style.display =
                 "none";
         }
-    }
-);
-
-cancelWireButton.addEventListener(
-    "click",
-    () => {
-        cancelWire();
-
-        setStatus(
-            "Wire placement cancelled."
-        );
     }
 );
 
@@ -6190,22 +6206,172 @@ document.addEventListener(
         }
 
         if (event.key === "Escape") {
-            if (wireStart) {
-                cancelWire();
-                return;
-            }
-
-            armedComponent = null;
-
-            componentPreview.style.display =
-                "none";
-
-            if (!running) {
-                setMode("select");
-            }
+            cancelCurrentAction();
         }
     }
 );
+
+/* =========================================================
+   TOUCH / IPHONE CONTROLS
+========================================================= */
+
+let touchPan = null;
+let touchDragComponentId = null;
+let pinchStart = null;
+let touchMoved = false;
+
+function touchPoint(touch) {
+    return {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    };
+}
+
+function distanceBetweenTouches(touchA, touchB) {
+    return Math.hypot(
+        touchB.clientX - touchA.clientX,
+        touchB.clientY - touchA.clientY
+    );
+}
+
+function midpointBetweenTouches(touchA, touchB) {
+    return {
+        x: (touchA.clientX + touchB.clientX) / 2,
+        y: (touchA.clientY + touchB.clientY) / 2
+    };
+}
+
+componentLayer.addEventListener("touchstart", event => {
+    const componentElement = event.target.closest(".placed-component");
+    if (!componentElement || event.target.closest(".terminal") || running) return;
+
+    const componentId = componentElement.dataset.componentId;
+    const component = getComponent(componentId);
+    if (!component) return;
+
+    if (mode === "delete") {
+        event.preventDefault();
+        deleteComponent(componentId);
+        return;
+    }
+
+    if (mode !== "select" || event.touches.length !== 1) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    touchMoved = false;
+    touchDragComponentId = componentId;
+    selectComponent(componentId);
+    component.element.classList.add("dragging");
+    connectedWireClass(componentId, "dragging", true);
+}, { passive: false });
+
+viewport.addEventListener("touchstart", event => {
+    if (event.target.closest(".placed-component") || event.target.closest(".terminal")) return;
+
+    if (event.touches.length === 2) {
+        event.preventDefault();
+        const middle = midpointBetweenTouches(event.touches[0], event.touches[1]);
+        pinchStart = {
+            distance: distanceBetweenTouches(event.touches[0], event.touches[1]),
+            zoom,
+            x: middle.x,
+            y: middle.y
+        };
+        touchPan = null;
+        return;
+    }
+
+    if (event.touches.length !== 1 || running) return;
+
+    const touch = event.touches[0];
+    const synthetic = touchPoint(touch);
+    touchMoved = false;
+
+    if (mode === "place" && armedComponent) {
+        event.preventDefault();
+        const position = gridPosition(synthetic);
+        const definition = armedComponent;
+        armedComponent = null;
+        const component = placeComponent(definition, position.x, position.y);
+        componentPreview.style.display = "none";
+        const inserted = autoConnect(component);
+        setMode("select");
+        if (!inserted) setStatus(`${component.displayName} placed.`);
+        return;
+    }
+
+    if (mode === "wire" && wireStart) {
+        event.preventDefault();
+        addWireCorner(gridPosition(synthetic));
+        return;
+    }
+
+    if (mode === "select") {
+        event.preventDefault();
+        touchPan = {
+            x: touch.clientX,
+            y: touch.clientY,
+            panX,
+            panY
+        };
+    }
+}, { passive: false });
+
+viewport.addEventListener("touchmove", event => {
+    if (event.touches.length === 2 && pinchStart) {
+        event.preventDefault();
+        const currentDistance = distanceBetweenTouches(event.touches[0], event.touches[1]);
+        const middle = midpointBetweenTouches(event.touches[0], event.touches[1]);
+        setZoom(
+            pinchStart.zoom * (currentDistance / Math.max(1, pinchStart.distance)),
+            middle.x,
+            middle.y
+        );
+        touchMoved = true;
+        return;
+    }
+
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+
+    if (touchDragComponentId) {
+        event.preventDefault();
+        const component = getComponent(touchDragComponentId);
+        if (!component) return;
+        const position = gridPosition(touchPoint(touch));
+        component.x = position.x;
+        component.y = position.y;
+        component.element.style.left = `${position.x}px`;
+        component.element.style.top = `${position.y}px`;
+        rebuildConnectedWires(component.id);
+        touchMoved = true;
+        return;
+    }
+
+    if (touchPan) {
+        event.preventDefault();
+        panX = touchPan.panX + touch.clientX - touchPan.x;
+        panY = touchPan.panY + touch.clientY - touchPan.y;
+        updateView();
+        touchMoved = true;
+    }
+}, { passive: false });
+
+viewport.addEventListener("touchend", event => {
+    if (touchDragComponentId) {
+        const component = getComponent(touchDragComponentId);
+        if (component) {
+            component.element.classList.remove("dragging");
+            connectedWireClass(component.id, "dragging", false);
+            rebuildConnectedWires(component.id);
+        }
+        touchDragComponentId = null;
+    }
+
+    if (event.touches.length < 2) pinchStart = null;
+    if (event.touches.length === 0) touchPan = null;
+}, { passive: false });
 
 /* =========================================================
    STARTUP
