@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <title>Wiring Diagram Builder</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="motor.css">
@@ -24,6 +24,7 @@
             <button type="button" data-tool="delete">Delete</button>
             <button type="button" data-tool="rotate">Rotate Selected</button>
             <button type="button" data-tool="fault">Toggle Fault</button>
+            <button type="button" data-tool="cancel">Cancel Current Action</button>
         </div>
     </div>
 
@@ -39,15 +40,31 @@
         </div>
     </div>
 
-    <label class="toolbar-control">Wire <input id="wire_color" type="color" value="#222222"></label>
-    <button id="cancel_wire_button" type="button" disabled>Cancel Wire</button>
-    <button id="zoom_out_button" type="button">−</button>
-    <span id="zoom_display">100%</span>
-    <button id="zoom_in_button" type="button">+</button>
-    <button id="center_view_button" type="button">Center Grid</button>
-    <button id="run_button" type="button">Run</button>
-    <button id="stop_button" type="button" disabled>Stop</button>
-    <button id="clear_button" type="button">Clear</button>
+    <div class="custom-dropdown">
+        <button id="view_dropdown_button" class="dropdown-button" type="button">
+            <span>Wire &amp; View</span><span class="dropdown-arrow">▼</span>
+        </button>
+        <div id="view_dropdown_menu" class="dropdown-menu toolbar-menu">
+            <label class="dropdown-control">Wire color <input id="wire_color" type="color" value="#222222"></label>
+            <div class="dropdown-zoom-row">
+                <button id="zoom_out_button" type="button" aria-label="Zoom out">−</button>
+                <span id="zoom_display">100%</span>
+                <button id="zoom_in_button" type="button" aria-label="Zoom in">+</button>
+            </div>
+            <button id="center_view_button" type="button">Center Grid</button>
+        </div>
+    </div>
+
+    <div class="custom-dropdown">
+        <button id="simulation_dropdown_button" class="dropdown-button" type="button">
+            <span>Simulation</span><span class="dropdown-arrow">▼</span>
+        </button>
+        <div id="simulation_dropdown_menu" class="dropdown-menu toolbar-menu">
+            <button id="run_button" type="button">Run</button>
+            <button id="stop_button" type="button" disabled>Stop</button>
+            <button id="clear_button" type="button">Clear</button>
+        </div>
+    </div>
     <input id="load_file_input" type="file" accept=".json,application/json" hidden>
 </div>
 
