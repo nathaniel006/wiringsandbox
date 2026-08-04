@@ -745,10 +745,9 @@ button:disabled {
 }
 
 .placed-component.destroyed .component-body {
-    background:
-        rgba(255, 0, 0, 0.2);
-
-    border-color: #ff0000;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
 }
 
 .placed-component.led-off .component-body img {
@@ -1291,6 +1290,412 @@ button:disabled {
     45% {
         opacity: 1;
         transform: scale(1.6);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.2);
+    }
+}
+
+
+/* =========================================================
+   DESKTOP + IPHONE TOOLBAR AND TOUCH SUPPORT
+========================================================= */
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+#toolbar {
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.search-wrapper {
+    flex: 0 0 320px;
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+}
+
+.toolbar-menu {
+    min-width: 210px;
+    padding: 7px;
+}
+
+.dropdown-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 48px;
+    padding: 8px 10px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.dropdown-control input[type="color"] {
+    width: 54px;
+    height: 38px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--control);
+}
+
+.dropdown-zoom-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 48px;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 0;
+}
+
+.dropdown-zoom-row button {
+    min-width: 48px;
+    min-height: 46px;
+}
+
+#zoom_display {
+    min-width: 70px;
+    text-align: center;
+}
+
+#canvas_viewport,
+#wiring_canvas {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.placed-component.led-heating .component-body {
+    background:
+        rgba(
+            255,
+            112,
+            0,
+            calc(0.10 + var(--led-heat-level, 0) * 0.28)
+        );
+    border-color: rgba(255, 105, 0, 0.9);
+    box-shadow:
+        0 0 calc(5px + var(--led-heat-level, 0) * 16px)
+        rgba(255, 92, 0, 0.85);
+}
+
+.placed-component.led-heating .component-body img {
+    animation:
+        led-heat-pulse
+        var(--led-heat-duration, 0.55s)
+        ease-in-out
+        infinite
+        alternate;
+}
+
+.placed-component.led-blown .component-body {
+    background: rgba(70, 22, 14, 0.28);
+    border-color: #8c2417;
+}
+
+.placed-component.led-blown .component-body img {
+    opacity: 0.18 !important;
+    filter:
+        grayscale(1)
+        brightness(0.32)
+        contrast(1.5) !important;
+}
+
+/* Broken internal conductor, similar to the blown fuse link. */
+.placed-component.led-blown .component-body::before,
+.placed-component.led-blown .component-body::after {
+    content: "";
+    position: absolute;
+    z-index: 25;
+    top: 50%;
+    width: 24px;
+    height: 3px;
+    background: #6f1712;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.placed-component.led-blown .component-body::before {
+    left: 24px;
+    transform: translateY(-50%) rotate(-20deg);
+}
+
+.placed-component.led-blown .component-body::after {
+    right: 24px;
+    transform: translateY(-50%) rotate(20deg);
+}
+
+.placed-component.led-blown::after {
+    content: "";
+    position: absolute;
+    z-index: 30;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff9a1f;
+    box-shadow:
+        0 0 6px #ff6a00,
+        0 0 14px #ff2f00;
+    transform: translate(-50%, -50%);
+    animation: led-break-pop 320ms ease-out 1 forwards;
+    pointer-events: none;
+}
+
+@keyframes led-heat-pulse {
+    from {
+        filter:
+            saturate(1.05)
+            brightness(1.05)
+            drop-shadow(0 0 3px rgba(255, 92, 0, 0.45));
+    }
+
+    to {
+        filter:
+            saturate(1.5)
+            brightness(1.35)
+            drop-shadow(0 0 13px rgba(255, 70, 0, 1));
+    }
+}
+
+@keyframes led-break-pop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+    }
+
+    45% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.8);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+}
+
+@media (pointer: coarse) {
+    button,
+    .dropdown-button,
+    #component_search {
+        min-height: 48px;
+    }
+
+    .terminal {
+        width: 24px;
+        height: 24px;
+        border-width: 3px;
+    }
+
+    .terminal-left { left: -12px; }
+    .terminal-right { right: -12px; }
+
+    .search-result {
+        min-height: 74px;
+    }
+}
+
+@media (max-width: 600px) {
+    #toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding: max(8px, env(safe-area-inset-top)) 8px 8px;
+    }
+
+    .search-wrapper {
+        grid-column: 1 / -1;
+        width: 300px;
+        min-width: 300px;
+        max-width: calc(100vw - 16px);
+        justify-self: start;
+    }
+
+    .custom-dropdown,
+    .dropdown-button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .dropdown-menu {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        top: auto;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: 62vh;
+        overflow-y: auto;
+        border-radius: 14px;
+    }
+
+    #workspace {
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+    }
+
+    #canvas_viewport {
+        order: 1;
+        height: 64vh;
+        min-height: 420px;
+    }
+
+    #property_panel {
+        order: 2;
+        width: 100%;
+    }
+
+    #status_message {
+        font-size: 14px;
+    }
+}
+
+/* =========================================================
+   LED CURRENT HEAT / BREAK — FUSE-STYLE
+========================================================= */
+
+.led-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.led-link,
+.led-break-left,
+.led-break-right,
+.led-diode-body,
+.led-cathode,
+.led-lead,
+.led-ray,
+.led-spark {
+    transition:
+        opacity 180ms ease,
+        stroke 180ms ease,
+        fill 180ms ease,
+        filter 180ms ease;
+}
+
+.led-break-left,
+.led-break-right,
+.led-spark {
+    opacity: 0;
+}
+
+.placed-component.led-powered .led-diode-body {
+    fill: color-mix(in srgb, var(--led-glow, #ff0000) 22%, white);
+    filter:
+        drop-shadow(
+            0 0 calc(3px * var(--led-glow-strength, 1))
+            var(--led-glow, #ff0000)
+        );
+}
+
+.placed-component.led-powered .led-ray {
+    stroke: var(--led-glow, #ff0000);
+    fill: var(--led-glow, #ff0000);
+    opacity: var(--led-brightness, 1);
+}
+
+.placed-component.led-heating .component-body {
+    background: transparent;
+    border-color: #d98200;
+    box-shadow: 0 0 7px rgba(255, 120, 0, 0.42);
+}
+
+.placed-component.led-heating .led-link {
+    stroke: #ff6a00;
+    animation:
+        led-link-heat
+        var(--led-heat-duration, 0.7s)
+        ease-in-out
+        infinite alternate;
+}
+
+.placed-component.led-heating .led-diode-body {
+    fill: rgba(255, 205, 125, 0.72);
+    stroke: #d98200;
+}
+
+.placed-component.led-blown .component-body {
+    background: transparent;
+    border-color: #cc3333;
+    animation: none;
+}
+
+.placed-component.led-blown .led-link {
+    opacity: 0;
+}
+
+.placed-component.led-blown .led-break-left,
+.placed-component.led-blown .led-break-right {
+    opacity: 1;
+    stroke: #7c1f1f;
+}
+
+.placed-component.led-blown .led-diode-body {
+    fill: rgba(225, 225, 225, 0.9);
+    stroke: #8c2c24;
+    filter: none;
+}
+
+.placed-component.led-blown .led-ray {
+    opacity: 0.15;
+    fill: #555;
+    stroke: #555;
+}
+
+.placed-component.led-blown .led-spark {
+    opacity: 1;
+    animation: led-spark-pop 300ms ease-out 1 forwards;
+}
+
+.placed-component.led-blown .led-spark-two {
+    animation-delay: 55ms;
+}
+
+/* Disable the previous smoke and drawn-on broken-line effects. */
+.placed-component.led-blown::after,
+.placed-component.led-blown .component-body::before,
+.placed-component.led-blown .component-body::after,
+.placed-component.led-burnt::after {
+    content: none !important;
+    display: none !important;
+}
+
+@keyframes led-link-heat {
+    from {
+        stroke: #d98200;
+        filter: drop-shadow(0 0 1px rgba(255, 90, 0, 0.35));
+    }
+
+    to {
+        stroke: #ff2f00;
+        filter: drop-shadow(0 0 7px rgba(255, 70, 0, 0.95));
+    }
+}
+
+@keyframes led-spark-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    45% {
+        opacity: 1;
+        transform: scale(1.7);
     }
 
     100% {
